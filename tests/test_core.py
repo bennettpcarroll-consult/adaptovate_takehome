@@ -131,3 +131,43 @@ def test_case_files_ingest():
     assert sum(e.type == "direct_speech" for e in c.catalog.values()) == 13
     # every catalog entry is itself verifiable against its own line
     assert all(verify(e.id, e.text, c).status == VERIFIED for e in c.catalog.values() if len(e.text.split()) >= 3)
+
+
+class _Busy(Exception):
+    def __init__(self, code):
+        self.code = code
+
+
+def test_retries_transient_errors_then_succeeds():
+    calls, waits = [], []
+
+    def call():
+        calls.append(1)
+        if len(calls) < 3:
+            raise _Busy(503)
+        return "ok"
+
+    assert core._with_retries(call, waits=(1, 2, 3), sleep=waits.append) == "ok"
+    assert waits == [1, 2]
+
+
+def test_does_not_retry_permanent_errors():
+    waits = []
+
+    def call():
+        raise _Busy(404)
+
+    with pytest.raises(_Busy):
+        core._with_retries(call, waits=(1, 2), sleep=waits.append)
+    assert waits == []
+
+
+def test_gives_up_after_last_retry():
+    waits = []
+
+    def call():
+        raise _Busy(503)
+
+    with pytest.raises(_Busy):
+        core._with_retries(call, waits=(1, 2), sleep=waits.append)
+    assert waits == [1, 2]

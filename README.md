@@ -23,7 +23,7 @@ Design choices: no vector DB (the notes fit in one prompt), no chat history, no 
 
 ## Configuration
 
-Set these in `.streamlit/secrets.toml` (see the `.example`) or as environment variables: `GEMINI_API_KEY`, optional `GEMINI_MODEL` (default `gemini-2.5-flash`), optional `APP_PASSWORD` to gate a hosted link.
+Set these in `.streamlit/secrets.toml` (see the `.example`) or as environment variables: `GEMINI_API_KEY`, optional `GEMINI_MODEL` (default `gemini-3.8-flash`), optional `APP_PASSWORD` to gate a hosted link.
 
 After each run the themes are cached to `last_run.json`. **Load cached run** reuses them without an API call, and verification always re-runs live against the current files.
 
