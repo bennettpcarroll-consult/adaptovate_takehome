@@ -271,7 +271,7 @@ EXCERPTS:
 {catalog}"""
 
 NOT_IN_INTERVIEWS = "Not in the interviews."
-DEFAULT_MODEL = "gemini-2.5-flash"
+DEFAULT_MODEL = "gemini-3.8-flash"
 
 
 def _generate(prompt: str, schema: type[BaseModel], api_key: str, model: str) -> BaseModel:
