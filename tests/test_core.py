@@ -90,6 +90,12 @@ def test_curly_quotes_are_normalised_only_never_verified(corpus):
     assert not c.ok
 
 
+def test_short_whole_line_is_verified_but_short_fragment_is_not():
+    c = ingest({"interview_1_X.txt": "NOTES | Head of Things\n\nSKILLS\n- Writing\n- Critical thinking and diplomacy\n"})
+    assert verify("I1-L4", "Writing", c).status == VERIFIED
+    assert verify("I1-L5", "Critical thinking", c).status == TOO_SHORT
+
+
 def test_bad_id_and_too_short(corpus):
     assert verify("I9-L1", "People care deeply about the mission", corpus).status == BAD_ID
     assert verify("I1-L8", "mission", corpus).status == TOO_SHORT
