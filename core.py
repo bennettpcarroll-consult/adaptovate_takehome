@@ -162,7 +162,10 @@ def verify(quote_id: str, quote_text: str, corpus: Corpus) -> Check:
     if excerpt:
         check.speaker, check.file, check.line, check.type = excerpt.speaker, excerpt.file, excerpt.line, excerpt.type
 
-    if len(qt.split()) < MIN_WORDS:
+    # A whole note is fine however short ("Writing"); the minimum only stops
+    # a tiny fragment being lifted out of a longer note.
+    is_whole_line = excerpt is not None and qt == excerpt.text
+    if len(qt.split()) < MIN_WORDS and not is_whole_line:
         check.status = TOO_SHORT
         return check
     if excerpt is None:
@@ -224,7 +227,7 @@ def tamper(text: str) -> str:
 
 class Evidence(BaseModel):
     quote_id: str = Field(description="The excerpt id exactly as given, e.g. I2-L17")
-    quote_text: str = Field(description="Copied character-for-character from that excerpt: the whole excerpt or a contiguous span of at least 3 words")
+    quote_text: str = Field(description="Copied character-for-character from that excerpt: the whole excerpt or a contiguous span of at least 3 words (a note shorter than 3 words must be quoted whole)")
     stance: Literal["blocker", "friction", "enabler"] = Field(description="blocker: works against change; friction: day-to-day cost or confusion; enabler: a strength or bright spot")
 
 
@@ -246,7 +249,7 @@ class QAResult(BaseModel):
 
 COPY_RULES = """Rules for every piece of evidence:
 - quote_id must be one of the ids in square brackets, exactly as written.
-- quote_text must be copied character-for-character from that excerpt: either the whole excerpt or one contiguous span of at least 3 words.
+- quote_text must be copied character-for-character from that excerpt: either the whole excerpt or one contiguous span of at least 3 words (a note shorter than 3 words must be quoted whole).
 - Do not paraphrase, correct spelling, change punctuation or dashes, add or remove quotation marks, or insert ellipses."""
 
 THEME_PROMPT = """You are analysing interview notes for a consulting engagement. Below are numbered excerpts; each shows [id] (speaker | section) text.

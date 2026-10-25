@@ -10,7 +10,7 @@ Turns a folder of interview-note `.txt` files into a themed evidence matrix, pro
 | --- | --- | --- |
 | M0 Ingest | Python | Each bullet becomes an excerpt with an ID tied to its real line number (`I2-L17` = file 2, line 17), the speaker from the header line (or the file name), its section, and a type: `direct_speech` if it contains quoted words, otherwise `interviewer_note`. |
 | M1 Themes | Gemini, one call | Gets the numbered excerpts and returns every major theme. For each piece of evidence it returns the ID **and** the exact text it is quoting. |
-| M2 Verifier | Python | Checks the text the model returned against the raw file **and** the cited line. Statuses: `VERIFIED`, `WRONG_LINE`, `NORMALISED_ONLY` (matches only after quote/whitespace normalisation; never counted as verified), `NOT_FOUND`, `BAD_ID`, `TOO_SHORT` (< 3 words). Only `VERIFIED` excerpts reach the matrix. |
+| M2 Verifier | Python | Checks the text the model returned against the raw file **and** the cited line. Statuses: `VERIFIED`, `WRONG_LINE`, `NORMALISED_ONLY` (matches only after quote/whitespace normalisation; never counted as verified), `NOT_FOUND`, `BAD_ID`, `TOO_SHORT` (a fragment under 3 words cut from a longer note; a short note quoted whole is fine). Only `VERIFIED` excerpts reach the matrix. |
 | M3 Q&A | Gemini + Python | Single-shot question. If the model says the notes don't answer it, or none of its citations verify, the app prints **"Not in the interviews."** |
 
 Design choices: no vector DB (the notes fit in one prompt), no chat history, no inference beyond the text, temperature 0. The verifier never trusts the model: it is tested with a one-character tamper and a wrong-line citation (`tests/test_core.py`, and the **Run tamper test** button in the app).
