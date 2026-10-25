@@ -10,6 +10,7 @@ from __future__ import annotations
 import json
 import os
 import re
+import time
 from collections import Counter
 from dataclasses import dataclass, field
 from typing import Literal
@@ -274,20 +275,28 @@ NOT_IN_INTERVIEWS = "Not in the interviews."
 DEFAULT_MODEL = "gemini-3.8-flash"
 
 
+RETRY_CODES = (429, 500, 503)
+RETRY_WAITS = (3, 8, 15)  # seconds; Gemini's busy/rate-limit errors are usually brief
+
+
+def _with_retries(call, waits=RETRY_WAITS, sleep=time.sleep):
+    """Retry transient Gemini errors (busy, rate-limited); raise anything else at once."""
+    for wait in (*waits, None):
+        try:
+            return call()
+        except Exception as e:
+            if wait is None or getattr(e, "code", None) not in RETRY_CODES:
+                raise
+            sleep(wait)
+
+
 def _generate(prompt: str, schema: type[BaseModel], api_key: str, model: str) -> BaseModel:
     from google import genai
     from google.genai import types
 
     client = genai.Client(api_key=api_key)
-    resp = client.models.generate_content(
-        model=model,
-        contents=prompt,
-        config=types.GenerateContentConfig(
-            response_mime_type="application/json",
-            response_schema=schema,
-            temperature=0,
-        ),
-    )
+    config = types.GenerateContentConfig(response_mime_type="application/json", response_schema=schema, temperature=0)
+    resp = _with_retries(lambda: client.models.generate_content(model=model, contents=prompt, config=config))
     if resp.parsed is not None:
         return resp.parsed
     return schema.model_validate_json(resp.text)
